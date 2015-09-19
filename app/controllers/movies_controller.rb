@@ -11,17 +11,26 @@ class MoviesController < ApplicationController
   end
 
   def index
-    if params[:sort_by].nil?
+    @all_ratings = Movie.uniq.pluck(:rating)
+    @selected_rating = Hash.new(false)
+    @user_rating = @all_ratings
+
+    if params[:sort_by].nil? && params[:ratings].nil?
        @movies = Movie.all
-    else
+    elsif !params[:sort_by].nil?
        if(params[:sort_by] =="title")
           @classHilite_title = "hilite"
-# @classHilite_release = nil
        else 
           @classHilite_release = "hilite"
        end
        @movies = Movie.all.order(params[:sort_by])
+    else
+        @user_rating = params[:ratings].keys
+        @movies = Movie.all.where(rating: params[:ratings].keys)
     end
+
+    @user_rating.each{ |rate| @selected_rating[rate]="true"}
+
   end
 
   def new
