@@ -13,22 +13,41 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.uniq.pluck(:rating)
     @selected_rating = Hash.new(false)
-    @user_rating = @all_ratings
-
-    if params[:sort_by].nil? && params[:ratings].nil?
-       @movies = Movie.all
-    elsif !params[:sort_by].nil?
-       if(params[:sort_by] =="title")
+    if !params[:sort_by].nil?
+      if(params[:sort_by] =="title")
           @classHilite_title = "hilite"
-       else 
+      else
           @classHilite_release = "hilite"
-       end
-       @movies = Movie.all.order(params[:sort_by])
-    else
-        @user_rating = params[:ratings].keys
-        @movies = Movie.all.where(rating: params[:ratings].keys)
+      
+      end
     end
 
+    if params[:ratings].nil?
+      @user_rating = @all_ratings
+    else
+      @user_rating = params[:ratings].keys
+    end
+
+    if params[:sort_by].nil? && params[:ratings].nil?
+       if !session[:sort_by].nil? || !session[:ratings].nil?
+          flash.keep
+          redirect_to movies_path :sort_by =>session[:sort_by], :ratings =>session[:ratings]
+       end
+    elsif !params[:sort_by].nil? && params[:ratings].nil?
+       session[:sort_by]= params[:sort_by]
+       if !session[:ratings].nil?
+          flash.keep
+          redirect_to movies_path :sort_by =>params[:sort_by], :ratings =>session[:ratings]
+       end
+    elsif params[:sort_by].nil? && !params[:ratings].nil?
+        session[:ratings] = params[:ratings]
+        if !session[:sort_by].nil?
+          flash.keep
+          redirect_to movies_path :sort_by =>session[:sort_by], :ratings =>params[:ratings]
+        end
+    end
+
+    @movies = Movie.all.order(params[:sort_by]).where(rating: @user_rating)
     @user_rating.each{ |rate| @selected_rating[rate]="true"}
 
   end
